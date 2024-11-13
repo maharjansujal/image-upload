@@ -1,52 +1,37 @@
 const express = require('express');
-const multer = require('multer');
-const axios = require('axios');
-const FormData = require('form-data');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const path = require('path');
+const cors = require('cors');
+
 const app = express();
-const port = 3000;
-
-// Middleware
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static('public'));
 
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const multer = require('multer');
+const upload = multer();
 
-app.post('/upload', upload.single('image'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).send('No image uploaded.');
-    }
+app.use(upload.none());
+mongoose.connect('mongodb+srv://sujalmaharjan:sujal123@cluster0.wisam.mongodb.net/Art_Registration_Form?retryWrites=true&w=majority&appName=Cluster0')
+    .then(() => console.log('Connected to MongoDB...'))
+    .catch(err => console.error('Could not connect to MongoDB...', err));
 
-    const studentName = req.body.studentName;
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/src/HTML', express.static(path.join(__dirname, 'src', 'HTML')));
 
-    const formData = new FormData();
-    formData.append('image', req.file.buffer, 'image.jpg');
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '/src/HTML/index.html'));
+  });
+const artFormAPI = require('./src/API/artFormAPI');
 
-    const response = await axios.post('https://api.imgur.com/3/image', formData, {
-      headers: {
-        'Authorization': 'Client-ID aca6d2502f5bfd8',
-        ...formData.getHeaders(),
-      },
-    });
+const tuitionFormAPI = require('./src/API/tuitionFormAPI');
 
-    const uploadedImageUrl = response.data.data.link;
-    formData.append('studentName', studentName);
-    formData.append('imageUrl', uploadedImageUrl);
+app.use('/api/art', artFormAPI);
+app.use('/api/tuition', tuitionFormAPI);
 
-    const result = {
-      studentName: studentName,
-      imageUrl: uploadedImageUrl
-    //   imageFormData: formData.getBuffer().toString('base64')
-    };
-
-    res.json(result);
-  } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send('Error uploading image to Imgur');
-  }
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+app.listen(3000, async()=>{
+    console.log('Server is running on port 3000...'); 
+    const { default: open } = await import('open');
+    await open('http://localhost:3000');
+})

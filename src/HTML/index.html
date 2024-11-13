@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <h1>Index.html</h1>
+  <form id="student_form" enctype="multipart/form-data">
+    <label for="student_name">Student Name:</label>
+    <input type="text" id="student_name" name="student_name" required>
+
+    <label for="art_photo">Upload Image:</label>
+    <input type="file" id="art_photo" name="art_photo" required>
+
+    <button type="submit" id="submitBtn">Submit</button>
+  </form>
+  <script>
+    document.getElementById('student_form').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const formData = new FormData();
+
+      formData.append('art_photo', document.getElementById('art_photo').files[0]);
+      formData.append('student_name', document.getElementById('student_name').value);
+
+      fetch('/api/art', {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('Success:', data);
+          console.log('formData:', formData);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    });
+  </script>
+</body>
+
+</html>
